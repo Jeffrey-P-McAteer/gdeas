@@ -7,33 +7,30 @@ import os
 import sys
 import subprocess
 import platform
+import stat
 
 HELP_TXT = '''
 Commands added:
 
- - draw.io
-    Downoads and runs an OFFLINE version of draw.io from https://github.com/jgraph/drawio-desktop/releases/
+ - draw.io [/path/to/file.png]
+    downloads and runs an OFFLINE version of draw.io from https://github.com/jgraph/drawio-desktop/releases/
+    optionally forwards an argument to a .png file
+
+ - draw
+    alias for "draw.io"
 
 '''
 
-DRAWIO_EXE_UNK_SYS_URL = 'https://github.com/jgraph/drawio-desktop/releases/download/v24.7.5/draw.io-24.7.5-windows-no-installer.exe'
-DRAWIO_EXE_URL = {
-  'linux':    'https://github.com/jgraph/drawio-desktop/releases/download/v24.7.5/drawio-x86_64-24.7.5.AppImage',
-  'darwin':   'https://github.com/jgraph/drawio-desktop/releases/download/v24.7.5/draw.io-arm64-24.7.5.dmg', # TODO need macos extract + execute logic someplace!
-  'windows':  'https://github.com/jgraph/drawio-desktop/releases/download/v24.7.5/draw.io-24.7.5-windows-no-installer.exe',
-}.get(platform.system().lower(), DRAWIO_UNK_SYS_URL)
-
 # Shortcut for SCRIPT_PARENT_DIR - the relative directory holding the python script being executed
-SCRIPT_PARENT_DIR = os.path.dirname(__file__)
+SCRIPT_PARENT_DIR = os.environ.get('SCRIPT_PARENT_DIR', os.path.dirname(__file__))
 SPD = SCRIPT_PARENT_DIR
 
-def idempotent_get_drawio_exe():
-  global DRAWIO_EXE_URL
-  os_name = platform.system().lower()
-  if 'linux' in os_name:
-    return os.path.join(os.path.dirname(__file__), '')
-
-
+def ensure_children_executable(dir_name):
+  for child_name in os.listdir(dir_name):
+    child_path = os.path.join(dir_name, child_name)
+    if os.path.isfile(child_path):
+      st = os.stat(child_path)
+      os.chmod(child_path, st.st_mode | stat.S_IEXEC)
 
 def main(args=sys.argv):
   global SPD, DRAWIO_EXE_URL
@@ -47,10 +44,13 @@ def main(args=sys.argv):
 
   tools_dir = os.path.join(SPD, 'tools')
   os.makedirs(tools_dir, exist_ok=True)
+  ensure_children_executable(tools_dir)
 
   shell_env = dict(os.environ)
 
   shell_env['PATH'] = os.pathsep.join( os.environ.get('PATH', '').split(os.pathsep) + [ tools_dir ] )
+
+  shell_env['SCRIPT_PARENT_DIR'] = SCRIPT_PARENT_DIR
 
   shell_env['NODE_OPTIONS'] = '--no-warnings '
 
