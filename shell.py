@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 # This script takes a shell like bash or cmd.exe and adds
 # PATH entries to expose tools in the `tools/` folder as single-word
