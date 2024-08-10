@@ -36,12 +36,14 @@ def ensure_children_executable(dir_name):
 def main(args=sys.argv):
   global SPD, DRAWIO_EXE_URL
 
-  linux_shell_exe_name = os.environ.get('SHELL', '')
+  os_name = platform.system().lower()
 
   shell_cmd_to_run = []
 
-  if len(linux_shell_exe_name) > 0:
-    shell_cmd_to_run = [ linux_shell_exe_name ]
+  if 'linux' in os_name:
+    shell_cmd_to_run = [ 'bash' ]
+  else:
+    shell_cmd_to_run = [ 'cmd.exe' ]
 
   tools_dir = os.path.join(SPD, 'tools')
   os.makedirs(tools_dir, exist_ok=True)
